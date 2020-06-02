@@ -20,6 +20,9 @@
 *.tar.gz
 *.rar
 
+# maven ignores
+target/
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
@@ -27,4 +30,5 @@ hs_err_pid*
 *.iml
 .idea/
 
-
+## Project specific ignore
+*.png
