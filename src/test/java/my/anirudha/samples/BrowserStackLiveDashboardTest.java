@@ -10,7 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
@@ -19,6 +21,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.safari.SafariDriver;
+import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -29,9 +33,9 @@ import org.springframework.util.StopWatch;
  *
  * @author Anirudha Khanna
  */
-public class BrowserStackInceptionTest {
+public class BrowserStackLiveDashboardTest {
 
-    private static final Logger LOGGER = LogManager.getLogger(BrowserStackInceptionTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
     private static final String SCREENSHOT_FILE_PATH = "live-dashboard.png";
 
     private static final String USERNAME = "anirudhakhanna5";
@@ -47,8 +51,11 @@ public class BrowserStackInceptionTest {
         }
     };
 
+    @Rule
+    public final TestName testName = new TestName();
+
     @Test
-    public void testBrowserStackInceptionLocal() throws Exception {
+    public void testBrowserStackLiveDashboardLocallyChrome() throws Exception {
         /* =================== Prepare ================= */
         System.setProperty("webdriver.chrome.driver", "/Users/anirudha/bin/chromedriver");
         WebDriver webDriver = new ChromeDriver();
@@ -58,8 +65,20 @@ public class BrowserStackInceptionTest {
     }
 
     @Test
+    public void testBrowserStackLiveDashboardLocallySafari() throws Exception {
+        /* =================== Prepare ================= */
+//        System.setProperty("webdriver.chrome.driver", "/Users/anirudha/bin/chromedriver");
+        SafariOptions safariOptions = new SafariOptions();
+        safariOptions.setCapability("safari:diagnose", true);
+        WebDriver webDriver = new SafariDriver(safariOptions);
+
+        /* =================== Execute & Verify ================= */
+        runTest(webDriver);
+    }
+
+    @Test
     @Ignore
-    public void testBroswerStackInceptionOnHub() throws Exception {
+    public void testBrowserStackLiveDashboardHub() throws Exception {
         /* =================== Prepare ================= */
         DesiredCapabilities capabilities = new DesiredCapabilities();
         capabilities.setCapability("browserName", "Chrome");
@@ -93,35 +112,33 @@ public class BrowserStackInceptionTest {
             WebDriverWait waitingDriver = new WebDriverWait(driver, 120);
 
             StopWatch stopWatch = new StopWatch();
-            LOGGER.info("STEP 1: Navigate to Google");
+            LOGGER.info("STEP 1: Navigate to Google {}", testName.getMethodName());
             stopWatch.start("STEP 1: Navigate to Google");
             driver.get("https://www.google.com");
             stopWatch.stop();
 
-            LOGGER.info("STEP 2: Search for BrowserStack & Navigate to BrowserStack");
+            LOGGER.info("STEP 2: Search for BrowserStack & Navigate to BrowserStack {}", testName.getMethodName());
             stopWatch.start("STEP 2: Search for BrowserStack & Navigate to BrowserStack");
             WebElement searchBox = driver.findElement(By.name("q"));
             searchBox.sendKeys("BrowserStack");
             searchBox.submit();
             waitingDriver.until(PAGE_READY_EXPECTATION);
 
-            WebElement bstackResult = driver.findElement(By.cssSelector("a[href*='browserstack']"));
-            Assert.assertNotNull("Did not find BrowserStack result in Google results", bstackResult);
-            bstackResult.click();
+            driver.findElement(By.xpath("//a[contains(@href, 'browserstack')]/h3")).click();
             waitingDriver.until(PAGE_READY_EXPECTATION);
             stopWatch.stop();
 
-            LOGGER.info("STEP 3: Login to BrowserStack");
+            LOGGER.info("STEP 3: Login to BrowserStack :: {}", testName.getMethodName());
             stopWatch.start("STEP 3: Login to BrowserStack");
             WebElement signInElement = driver.findElement(By.linkText("Sign in"));
             Assert.assertNotNull("No Sign In button found", signInElement);
             signInElement.click();
 
-            LOGGER.info("Accepting Cookie Notifications");
+            LOGGER.info("Accepting Cookie Notifications {}", testName.getMethodName());
             WebElement acceptCookieButton = driver.findElement(By.id("accept-cookie-notification"));
             acceptCookieButton.click();
 
-            LOGGER.info("Starting Sign In actions");
+            LOGGER.info("Starting Sign In actions :: {}", testName.getMethodName());
             WebElement emailElement = driver.findElement(By.id("user_email_login"));
             WebElement passwordElement = driver.findElement(By.id("user_password"));
             WebElement submitElement = driver.findElement(By.id("user_submit"));
@@ -131,19 +148,16 @@ public class BrowserStackInceptionTest {
             submitElement.click();
             stopWatch.stop();
 
-            LOGGER.info("STEP 4: Loading BrowserStack Live Dashboard");
+            LOGGER.info("STEP 4: Loading BrowserStack Live Dashboard {}", testName.getMethodName());
             stopWatch.start("STEP 4: Loading BrowserStack Live Dashboard");
             waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-parentos='windows']")));
             waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-browser-version='76.0' and @data-browser='Firefox' and @data-os='win10']")));
             stopWatch.stop();
 
             Assert.assertEquals("Page Title has changed", PAGE_TITLE, driver.getTitle());
-            LOGGER.info("Completed Live Dashboard test.");
-            LOGGER.info("Unit test timings :: {}", stopWatch.prettyPrint());
-        } catch (Throwable throwable) {
-
+            LOGGER.info("Completed Live Dashboard test. {}", testName.getMethodName());
+            LOGGER.info("Test :: {} Timings :: {}", testName.getMethodName(), stopWatch.prettyPrint());
         } finally {
-            driver.close();
             driver.quit();
         }
     }
