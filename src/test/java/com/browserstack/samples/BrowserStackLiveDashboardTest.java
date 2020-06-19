@@ -1,8 +1,10 @@
-package my.anirudha.samples;
+package com.browserstack.samples;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,35 +15,44 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.safari.SafariDriver;
-import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.util.StopWatch;
+
+import com.browserstack.driver.config.Browser;
+import com.browserstack.driver.config.SampleParseConfiguration;
+import com.browserstack.driver.config.WebDriverConfiguration;
+import com.browserstack.test.rules.WebDriverProviderRule;
+import com.browserstack.test.runner.ParallelParameterized;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 /**
  * Created with IntelliJ IDEA.
  *
  * @author Anirudha Khanna
  */
+@RunWith(ParallelParameterized.class)
 public class BrowserStackLiveDashboardTest {
 
-    private static final Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
+    private static Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
     private static final String SCREENSHOT_FILE_PATH = "live-dashboard.png";
 
     private static final String USERNAME = "anirudhakhanna5";
     private static final String AUTOMATE_KEY = "yUGx7w2dij48Wfg6cRQb";
     private static final String REMOTE_HUB_URL = "https://" + USERNAME + ":" + AUTOMATE_KEY + "@hub-cloud.browserstack.com/wd/hub";
     private static final String PAGE_TITLE = "Dashboard";
+    private static final String BROWSER_CONFIGURATION = "browser-configuration.yml";
 
     private static final ExpectedCondition<Boolean> PAGE_READY_EXPECTATION = new ExpectedCondition<Boolean>() {
         @NullableDecl
@@ -51,28 +62,43 @@ public class BrowserStackLiveDashboardTest {
         }
     };
 
+    private static WebDriverConfiguration webDriverConfiguration;
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object[]> data() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        URL resourceURL = SampleParseConfiguration.class.getClassLoader().getResource(BROWSER_CONFIGURATION);
+        webDriverConfiguration =  objectMapper.readValue(resourceURL, WebDriverConfiguration.class);
+        LOGGER.debug("Web Driver Configuration :: {}", webDriverConfiguration);
+        List<Object[]> returnData = new ArrayList<>();
+        List<? extends Browser> browsers = webDriverConfiguration.getLocalBrowsers();
+        if (!webDriverConfiguration.getIsLocalRun()) {
+            browsers = webDriverConfiguration.getBrowserStackWebDriverConfig().getRemoteBrowsers();
+        }
+
+        browsers.forEach(b -> {
+            returnData.add(new Object[]{b});
+        });
+        return returnData;
+    }
+
+    @Parameterized.Parameter(0)
+    public Browser browser;
+
     @Rule
     public final TestName testName = new TestName();
 
-    @Test
-    public void testBrowserStackLiveDashboardLocallyChrome() throws Exception {
-        /* =================== Prepare ================= */
-        System.setProperty("webdriver.chrome.driver", "/Users/anirudha/bin/chromedriver");
-        WebDriver webDriver = new ChromeDriver();
-
-        /* =================== Execute & Verify ================= */
-        runTest(webDriver);
-    }
+    @Rule
+    public final WebDriverProviderRule webDriverProvider = new WebDriverProviderRule();
 
     @Test
-    public void testBrowserStackLiveDashboardLocallySafari() throws Exception {
+    public void testBrowserStackLiveDashboardLocally() throws Exception {
         /* =================== Prepare ================= */
-//        System.setProperty("webdriver.chrome.driver", "/Users/anirudha/bin/chromedriver");
-        SafariOptions safariOptions = new SafariOptions();
-        safariOptions.setCapability("safari:diagnose", true);
-        WebDriver webDriver = new SafariDriver(safariOptions);
+        WebDriver webDriver = webDriverProvider.getWebDriver(webDriverConfiguration, browser);
 
         /* =================== Execute & Verify ================= */
+        LOGGER.debug("Running Test {} on Browser {} with WebDriver :: {}", webDriverProvider.getMethodName(),
+                     browser.getName(), webDriver);
         runTest(webDriver);
     }
 

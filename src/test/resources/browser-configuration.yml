@@ -1,0 +1,45 @@
+isLocalRun: true
+local:
+  - name: chrome
+    driverPath: /Users/anirudha/bin/chromedriver
+    capabilities:
+      sample.property1: someValue
+      sample.property2: someValue
+  - name: safari
+    capabilities:
+      "safari:diagnose": true
+browserstack:
+  hub: hub-cloud.browserstack.com/wd/hub
+  user: anirudhakhanna5
+  key: yUGx7w2dij48Wfg6cRQb
+  projectName: Automate JUnit Samples
+  buildName: Configurable Selenium
+  local: false
+  debug: true
+  consoleLogs: true
+  networkLogs: true
+  browsers:
+    - name: chrome
+      version: 83.0
+      os: OS X
+      osVersion: Catalina
+      capabilities:
+        sample.property1: someValue
+        sample.property2: someValue
+    - name: chrome
+      version: 81.0
+      os: OS X
+      osVersion: Sierra
+      capabilities:
+        sample.property1: someValue
+        sample.property2: someValue
+    - name: chrome
+      version: 80.0
+      os: OS X
+      osVersion: Mountain Lion
+      capabilities:
+        sample.property1: someValue
+        sample.property2: someValue
+
+
+
