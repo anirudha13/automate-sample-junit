@@ -19,7 +19,7 @@ public class WebDriverConfiguration {
     private Boolean isLocalRun;
 
     @JsonProperty("local")
-    private List<LocalBrowser> localBrowsers;
+    private List<RealBrowser> localBrowsers;
 
     @JsonProperty("browserstack")
     private BrowserStackWebDriverConfig browserStackWebDriverConfig;

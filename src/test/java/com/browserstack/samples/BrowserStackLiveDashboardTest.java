@@ -3,27 +3,21 @@ package com.browserstack.samples;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -68,7 +62,7 @@ public class BrowserStackLiveDashboardTest {
     public static Iterable<Object[]> data() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         URL resourceURL = SampleParseConfiguration.class.getClassLoader().getResource(BROWSER_CONFIGURATION);
-        webDriverConfiguration =  objectMapper.readValue(resourceURL, WebDriverConfiguration.class);
+        webDriverConfiguration = objectMapper.readValue(resourceURL, WebDriverConfiguration.class);
         LOGGER.debug("Web Driver Configuration :: {}", webDriverConfiguration);
         List<Object[]> returnData = new ArrayList<>();
         List<? extends Browser> browsers = webDriverConfiguration.getLocalBrowsers();
@@ -92,7 +86,7 @@ public class BrowserStackLiveDashboardTest {
     public final WebDriverProviderRule webDriverProvider = new WebDriverProviderRule();
 
     @Test
-    public void testBrowserStackLiveDashboardLocally() throws Exception {
+    public void testBrowserStackLiveDashboardLogin() throws Exception {
         /* =================== Prepare ================= */
         WebDriver webDriver = webDriverProvider.getWebDriver(webDriverConfiguration, browser);
 
@@ -102,89 +96,56 @@ public class BrowserStackLiveDashboardTest {
         runTest(webDriver);
     }
 
-    @Test
-    @Ignore
-    public void testBrowserStackLiveDashboardHub() throws Exception {
-        /* =================== Prepare ================= */
-        DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setCapability("browserName", "Chrome");
-        capabilities.setCapability("browserVersion", "83.0");
-
-        Map<String, Object> browserstackOptions = new HashMap<String, Object>();
-        browserstackOptions.put("os", "OS X");
-        browserstackOptions.put("osVersion", "Catalina");
-        browserstackOptions.put("projectName", "Onboarding Samples");
-        browserstackOptions.put("buildName", "JUnit-Selenium");
-        browserstackOptions.put("sessionName", "Browserstack-Login");
-        browserstackOptions.put("local", "false");
-        browserstackOptions.put("consoleLogs", "info");
-        browserstackOptions.put("networkLogs", "true");
-        browserstackOptions.put("resolution", "1280x800");
-
-        capabilities.setCapability("bstack:options", browserstackOptions);
-
-
-        WebDriver webDriver = new RemoteWebDriver(new URL(REMOTE_HUB_URL), capabilities);
-
-        /* =================== Execute & Verify ================= */
-        runTest(webDriver);
-    }
-
     private void runTest(WebDriver driver) throws IOException, InterruptedException {
-        try {
-            Dimension dimension = new Dimension(1280, 680);
-            driver.manage().window().setSize(dimension);
+        WebDriverWait waitingDriver = new WebDriverWait(driver, 120);
 
-            WebDriverWait waitingDriver = new WebDriverWait(driver, 120);
+        StopWatch stopWatch = new StopWatch();
+        LOGGER.info("STEP 1: Navigate to Google {}", testName.getMethodName());
+        stopWatch.start("STEP 1: Navigate to Google");
+        driver.get("https://www.google.com");
+        stopWatch.stop();
 
-            StopWatch stopWatch = new StopWatch();
-            LOGGER.info("STEP 1: Navigate to Google {}", testName.getMethodName());
-            stopWatch.start("STEP 1: Navigate to Google");
-            driver.get("https://www.google.com");
-            stopWatch.stop();
+        LOGGER.info("STEP 2: Search for BrowserStack & Navigate to BrowserStack {}", testName.getMethodName());
+        stopWatch.start("STEP 2: Search for BrowserStack & Navigate to BrowserStack");
+        WebElement searchBox = driver.findElement(By.name("q"));
+        searchBox.sendKeys("BrowserStack");
+        searchBox.submit();
+        waitingDriver.until(PAGE_READY_EXPECTATION);
 
-            LOGGER.info("STEP 2: Search for BrowserStack & Navigate to BrowserStack {}", testName.getMethodName());
-            stopWatch.start("STEP 2: Search for BrowserStack & Navigate to BrowserStack");
-            WebElement searchBox = driver.findElement(By.name("q"));
-            searchBox.sendKeys("BrowserStack");
-            searchBox.submit();
-            waitingDriver.until(PAGE_READY_EXPECTATION);
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[contains(@href, 'browserstack')]/h3")));
+        driver.findElement(By.xpath("//a[contains(@href, 'browserstack')]/h3")).click();
+        stopWatch.stop();
 
-            driver.findElement(By.xpath("//a[contains(@href, 'browserstack')]/h3")).click();
-            waitingDriver.until(PAGE_READY_EXPECTATION);
-            stopWatch.stop();
+        LOGGER.info("STEP 3: Login to BrowserStack :: {}", testName.getMethodName());
+        stopWatch.start("STEP 3: Login to BrowserStack");
 
-            LOGGER.info("STEP 3: Login to BrowserStack :: {}", testName.getMethodName());
-            stopWatch.start("STEP 3: Login to BrowserStack");
-            WebElement signInElement = driver.findElement(By.linkText("Sign in"));
-            Assert.assertNotNull("No Sign In button found", signInElement);
-            signInElement.click();
+        LOGGER.info("Accepting Cookie Notifications {}", testName.getMethodName());
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.id("accept-cookie-notification")));
+        driver.findElement(By.id("accept-cookie-notification")).click();
 
-            LOGGER.info("Accepting Cookie Notifications {}", testName.getMethodName());
-            WebElement acceptCookieButton = driver.findElement(By.id("accept-cookie-notification"));
-            acceptCookieButton.click();
+        LOGGER.info("Starting Sign In actions :: {}", testName.getMethodName());
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.linkText("Sign in")));
+        driver.findElement(By.linkText("Sign in")).click();
 
-            LOGGER.info("Starting Sign In actions :: {}", testName.getMethodName());
-            WebElement emailElement = driver.findElement(By.id("user_email_login"));
-            WebElement passwordElement = driver.findElement(By.id("user_password"));
-            WebElement submitElement = driver.findElement(By.id("user_submit"));
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.id("user_email_login")));
+        WebElement emailElement = driver.findElement(By.id("user_email_login"));
+        WebElement passwordElement = driver.findElement(By.id("user_password"));
+        WebElement submitElement = driver.findElement(By.id("user_submit"));
 
-            emailElement.sendKeys("anirudha.khanna@gmail.com");
-            passwordElement.sendKeys("Automate@123");
-            submitElement.click();
-            stopWatch.stop();
+        emailElement.sendKeys("anirudha.khanna@gmail.com");
+        passwordElement.sendKeys("Automate@123");
+        submitElement.click();
+        stopWatch.stop();
 
-            LOGGER.info("STEP 4: Loading BrowserStack Live Dashboard {}", testName.getMethodName());
-            stopWatch.start("STEP 4: Loading BrowserStack Live Dashboard");
-            waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-parentos='windows']")));
-            waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-browser-version='76.0' and @data-browser='Firefox' and @data-os='win10']")));
-            stopWatch.stop();
+        LOGGER.info("STEP 4: Loading BrowserStack Live Dashboard {}", testName.getMethodName());
+        stopWatch.start("STEP 4: Loading BrowserStack Live Dashboard");
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-parentos='windows']")));
+        waitingDriver.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//li[@data-browser-version='76.0' and @data-browser='Firefox' and @data-os='win10']")));
+        stopWatch.stop();
 
-            Assert.assertEquals("Page Title has changed", PAGE_TITLE, driver.getTitle());
-            LOGGER.info("Completed Live Dashboard test. {}", testName.getMethodName());
-            LOGGER.info("Test :: {} Timings :: {}", testName.getMethodName(), stopWatch.prettyPrint());
-        } finally {
-            driver.quit();
-        }
+        Assert.assertEquals("Page Title has changed", PAGE_TITLE, driver.getTitle());
+        LOGGER.info("Completed Live Dashboard test. {}", testName.getMethodName());
+        LOGGER.info("Test :: {} Timings :: {}", testName.getMethodName(), stopWatch.prettyPrint());
     }
+
 }

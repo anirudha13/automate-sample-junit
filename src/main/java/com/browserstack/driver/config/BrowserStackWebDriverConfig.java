@@ -37,11 +37,11 @@ public class BrowserStackWebDriverConfig {
     private Boolean debug;
 
     @JsonProperty("consoleLogs")
-    private Boolean consoleLogs;
+    private String consoleLogs;
 
     @JsonProperty("networkLogs")
-    private Boolean networkLogs;
+    private String networkLogs;
 
     @JsonProperty("browsers")
-    private List<RemoteBrowser> remoteBrowsers;
+    private List<RealBrowser> remoteBrowsers;
 }

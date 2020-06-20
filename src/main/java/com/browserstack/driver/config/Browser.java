@@ -11,6 +11,8 @@ public interface Browser {
 
     boolean isRemote();
 
+    String getDriverPath();
+
     Capabilities getCapabilities();
 
     Map<String, Object> getCapabilityMap();

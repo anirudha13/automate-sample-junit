@@ -1,4 +1,4 @@
-isLocalRun: true
+isLocalRun: false
 local:
   - name: chrome
     driverPath: /Users/anirudha/bin/chromedriver
@@ -16,30 +16,30 @@ browserstack:
   buildName: Configurable Selenium
   local: false
   debug: true
-  consoleLogs: true
+  consoleLogs: info
   networkLogs: true
   browsers:
     - name: chrome
       version: 83.0
       os: OS X
       osVersion: Catalina
-      capabilities:
-        sample.property1: someValue
-        sample.property2: someValue
-    - name: chrome
-      version: 81.0
+#      capabilities:
+#        sample.property1: someValue
+#        sample.property2: someValue
+    - name: firefox
+      version: 77.0
       os: OS X
-      osVersion: Sierra
-      capabilities:
-        sample.property1: someValue
-        sample.property2: someValue
-    - name: chrome
-      version: 80.0
+      osVersion: Catalina
+#      capabilities:
+#        sample.property1: someValue
+#        sample.property2: someValue
+    - name: safari
+      version: 13.1
       os: OS X
-      osVersion: Mountain Lion
-      capabilities:
-        sample.property1: someValue
-        sample.property2: someValue
+      osVersion: Catalina
+#      capabilities:
+#        sample.property1: someValue
+#        sample.property2: someValue
 
 
 

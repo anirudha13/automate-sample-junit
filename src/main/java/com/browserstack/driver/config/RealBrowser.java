@@ -12,24 +12,26 @@ import lombok.ToString;
  * @author Anirudha Khanna
  */
 @Data
-@ToString
-public abstract class AbstractBrowser implements Browser {
+@ToString(of = {"name", "version", "os", "osVersion"})
+public class RealBrowser implements Browser {
+
+    @JsonProperty("version")
+    private String version;
+
+    @JsonProperty("os")
+    private String os;
+
+    @JsonProperty("osVersion")
+    private String osVersion;
+
+    @JsonProperty
+    private String driverPath;
 
     @JsonProperty("name")
     private String name;
 
     @JsonProperty("capabilities")
     private Capabilities capabilities;
-
-    private Boolean isRemote = false;
-
-    public AbstractBrowser(Boolean isRemote) {
-        this.isRemote = isRemote;
-    }
-
-    public boolean isRemote() {
-        return this.isRemote;
-    }
 
     public Object capability(String key) {
         return this.capabilities.capability(key);
@@ -38,5 +40,12 @@ public abstract class AbstractBrowser implements Browser {
     @Override
     public Map<String, Object> getCapabilityMap() {
         return this.capabilities.getCapabilityMap();
+    }
+
+    public boolean isRemote() {
+        if (driverPath != null && !driverPath.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 }
