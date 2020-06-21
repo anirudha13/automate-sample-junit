@@ -42,9 +42,6 @@ public class BrowserStackLiveDashboardTest {
     private static Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
     private static final String SCREENSHOT_FILE_PATH = "live-dashboard.png";
 
-    private static final String USERNAME = "anirudhakhanna5";
-    private static final String AUTOMATE_KEY = "yUGx7w2dij48Wfg6cRQb";
-    private static final String REMOTE_HUB_URL = "https://" + USERNAME + ":" + AUTOMATE_KEY + "@hub-cloud.browserstack.com/wd/hub";
     private static final String PAGE_TITLE = "Dashboard";
     private static final String BROWSER_CONFIGURATION = "browser-configuration.yml";
 
@@ -66,7 +63,7 @@ public class BrowserStackLiveDashboardTest {
         LOGGER.debug("Web Driver Configuration :: {}", webDriverConfiguration);
         List<Object[]> returnData = new ArrayList<>();
         List<? extends Browser> browsers = webDriverConfiguration.getLocalBrowsers();
-        if (!webDriverConfiguration.getIsLocalRun()) {
+        if (webDriverConfiguration.getRunOnBrowserStack()) {
             browsers = webDriverConfiguration.getBrowserStackWebDriverConfig().getRemoteBrowsers();
         }
 

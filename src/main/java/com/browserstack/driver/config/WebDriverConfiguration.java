@@ -15,8 +15,8 @@ import lombok.ToString;
 @ToString
 public class WebDriverConfiguration {
 
-    @JsonProperty("isLocalRun")
-    private Boolean isLocalRun;
+    @JsonProperty("runOnBrowserStack")
+    private Boolean runOnBrowserStack;
 
     @JsonProperty("local")
     private List<RealBrowser> localBrowsers;

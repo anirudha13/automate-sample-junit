@@ -15,6 +15,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.SessionId;
@@ -63,10 +64,10 @@ public class WebDriverProviderRule extends TestWatcher {
 
     public WebDriver getWebDriver(WebDriverConfiguration webDriverConfiguration, Browser browser) {
         this.webDriverConfiguration = webDriverConfiguration;
-        if (this.webDriverConfiguration.getIsLocalRun()) {
-            driver = createLocalBrowserDriver(browser);
-        } else {
+        if (this.webDriverConfiguration.getRunOnBrowserStack()) {
             driver = createRemoteBrowserDriver(browser);
+        } else {
+            driver = createLocalBrowserDriver(browser);
         }
         return driver;
     }
@@ -113,7 +114,11 @@ public class WebDriverProviderRule extends TestWatcher {
         switch (browser.getName()) {
             case "chrome":
                 System.setProperty("webdriver.chrome.driver", browser.getDriverPath());
-                driver = new ChromeDriver();
+                ChromeOptions chromeOptions = new ChromeOptions();
+                for (Map.Entry<String, Object> entry : browser.getCapabilityMap().entrySet()) {
+                    chromeOptions.setCapability(entry.getKey(), entry.getValue());
+                }
+                driver = new ChromeDriver(chromeOptions);
                 break;
             case "safari":
                 SafariOptions safariOptions = new SafariOptions();
@@ -132,49 +137,10 @@ public class WebDriverProviderRule extends TestWatcher {
      * Invoked when a test succeeds
      */
     protected void succeeded(Description description) {
-        try {
-            LOGGER.info("Succeeded Test :: {} WebDriver Session :: {}", description.getDisplayName(), this.driver);
-            if (!webDriverConfiguration.getIsLocalRun()) {
-                Map<String, Object> requestMap = new HashMap<>();
-                requestMap.put(STATUS_KEY, "passed");
-                String requestBodyStr = objectMapper.writeValueAsString(requestMap);
-                RequestBody requestBody = RequestBody.create(JSON, requestBodyStr);
-                URL requestUrl = createRequestUrl(this.driver);
-                Request request = new Request.Builder().url(requestUrl).put(requestBody).build();
-                OkHttpClient okHttpClient = createAuthenticatedClient();
-                try (Response response = okHttpClient.newCall(request).execute()) {
-                    if (response != null && response.body() != null) {
-                        LOGGER.debug("Got successful response :: {}", response.body().string());
-                    }
-                } catch (IOException ioe) {
-                    throw new Error(ioe);
-                }
-            }
-        } catch (JsonProcessingException e) {
-            throw new Error(e);
-        }
-    }
-
-    private OkHttpClient createAuthenticatedClient() {
-        String username = this.webDriverConfiguration.getBrowserStackWebDriverConfig().getUser();
-        String password = this.webDriverConfiguration.getBrowserStackWebDriverConfig().getKey();
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().authenticator(new Authenticator() {
-            @Nullable
-            @Override
-            public Request authenticate(Route route, Response response) throws IOException {
-                String credential = Credentials.basic(username, password);
-                return response.request().newBuilder().header("Authorization", credential).build();
-            }
-        }).build();
-        return okHttpClient;
-    }
-
-    private URL createRequestUrl(WebDriver driver) {
-        SessionId sessionId = ((RemoteWebDriver) driver).getSessionId();
-        try {
-            return new URL(SESSION_UPDATE_URL + sessionId.toString() + ".json");
-        } catch (MalformedURLException e) {
-            throw new Error(e);
+        LOGGER.info("Succeeded Test :: {} WebDriver Session :: {}", description.getDisplayName(), this.driver);
+        if (webDriverConfiguration.getRunOnBrowserStack()) {
+            Request request = createRequest("failed", "", this.driver);
+            sendRequest(request);
         }
     }
 
@@ -183,26 +149,9 @@ public class WebDriverProviderRule extends TestWatcher {
      */
     protected void failed(Throwable e, Description description) {
         LOGGER.info("Failed Test :: {} WebDriver Session :: {}", description.getDisplayName(), this.driver, e);
-        try {
-            if (!webDriverConfiguration.getIsLocalRun()) {
-                Map<String, Object> requestMap = new HashMap<>();
-                requestMap.put(STATUS_KEY, "failed");
-                requestMap.put(REASON_KEY, e.getMessage().substring(0, 255));
-                String requestBodyStr = objectMapper.writeValueAsString(requestMap);
-                RequestBody requestBody = RequestBody.create(JSON, requestBodyStr);
-                URL requestUrl = createRequestUrl(this.driver);
-                Request request = new Request.Builder().url(requestUrl).put(requestBody).build();
-                OkHttpClient okHttpClient = createAuthenticatedClient();
-                try (Response response = okHttpClient.newCall(request).execute()) {
-                    if (response != null && response.body() != null) {
-                        LOGGER.debug("Got successful response :: {}", response.body().string());
-                    }
-                } catch (IOException ioe) {
-                    throw new Error(ioe);
-                }
-            }
-        } catch (JsonProcessingException jpe) {
-            throw new Error(jpe);
+        if (webDriverConfiguration.getRunOnBrowserStack()) {
+            Request request = createRequest("failed", e.getMessage(), this.driver);
+            sendRequest(request);
         }
     }
 
@@ -229,4 +178,54 @@ public class WebDriverProviderRule extends TestWatcher {
         }
     }
 
+
+    private void sendRequest(Request request) {
+        try {
+            OkHttpClient okHttpClient = createAuthenticatedClient();
+            Response response = okHttpClient.newCall(request).execute();
+            if (response != null && response.body() != null) {
+                LOGGER.debug("Got successful response :: {}", response.body().string());
+            }
+        } catch (IOException ioe) {
+            LOGGER.error("Caught exception when sending request :: {}", request, ioe);
+        }
+    }
+
+    private OkHttpClient createAuthenticatedClient() {
+        String username = this.webDriverConfiguration.getBrowserStackWebDriverConfig().getUser();
+        String password = this.webDriverConfiguration.getBrowserStackWebDriverConfig().getKey();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().authenticator(new Authenticator() {
+            @Nullable
+            @Override
+            public Request authenticate(Route route, Response response) throws IOException {
+                String credential = Credentials.basic(username, password);
+                return response.request().newBuilder().header("Authorization", credential).build();
+            }
+        }).build();
+        return okHttpClient;
+    }
+
+    private URL createRequestUrl(WebDriver driver) {
+        SessionId sessionId = ((RemoteWebDriver) driver).getSessionId();
+        try {
+            return new URL(SESSION_UPDATE_URL + sessionId.toString() + ".json");
+        } catch (MalformedURLException e) {
+            throw new Error(e);
+        }
+    }
+
+    protected Request createRequest(String status, String reason, WebDriver driver) {
+        try {
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put(STATUS_KEY, status);
+            requestMap.put(REASON_KEY, reason.substring(0, 255));
+            String requestBodyStr = objectMapper.writeValueAsString(requestMap);
+            RequestBody requestBody = RequestBody.create(JSON, requestBodyStr);
+            URL requestUrl = createRequestUrl(driver);
+            return new Request.Builder().url(requestUrl).put(requestBody).build();
+        } catch (JsonProcessingException jsonProcessingException) {
+            LOGGER.error("Unable to create request :: ", jsonProcessingException);
+        }
+        return null;
+    }
 }
