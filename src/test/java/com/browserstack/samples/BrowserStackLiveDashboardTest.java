@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -39,7 +40,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 @RunWith(ParallelParameterized.class)
 public class BrowserStackLiveDashboardTest {
 
-    private static Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
     private static final String SCREENSHOT_FILE_PATH = "live-dashboard.png";
 
     private static final String PAGE_TITLE = "Dashboard";
@@ -83,6 +84,7 @@ public class BrowserStackLiveDashboardTest {
     public final WebDriverProviderRule webDriverProvider = new WebDriverProviderRule();
 
     @Test
+    @Ignore
     public void testBrowserStackLiveDashboardLogin() throws Exception {
         /* =================== Prepare ================= */
         WebDriver webDriver = webDriverProvider.getWebDriver(webDriverConfiguration, browser);

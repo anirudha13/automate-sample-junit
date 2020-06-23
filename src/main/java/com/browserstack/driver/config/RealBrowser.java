@@ -31,7 +31,7 @@ public class RealBrowser implements Browser {
     private String name;
 
     @JsonProperty("capabilities")
-    private Capabilities capabilities;
+    private Capabilities capabilities = new Capabilities();
 
     public Object capability(String key) {
         return this.capabilities.capability(key);

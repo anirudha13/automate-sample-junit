@@ -5,8 +5,6 @@
 # Log file
 *.log
 
-# BlueJ files
-*.ctxt
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -32,3 +30,10 @@ hs_err_pid*
 
 ## Project specific ignore
 *.png
+
+## Other IDE ignores
+.project
+.classpath
+.settings/
+.factorypath
+

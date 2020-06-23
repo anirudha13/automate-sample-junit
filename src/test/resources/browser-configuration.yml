@@ -4,9 +4,9 @@ local:
     driverPath: /Users/anirudha/bin/chromedriver
     capabilities:
 #      sample.property1: someValue
-  - name: safari
-    capabilities:
-      "safari:diagnose": true
+#  - name: safari
+#    capabilities:
+#      "safari:diagnose": true
 browserstack:
   hub: hub-cloud.browserstack.com/wd/hub
   user: anirudhakhanna5
