@@ -9,8 +9,8 @@ local:
 #      "safari:diagnose": true
 browserstack:
   hub: hub-cloud.browserstack.com/wd/hub
-  user: anirudhakhanna5
-  key: yUGx7w2dij48Wfg6cRQb
+  user: 
+  key: 
   projectName: Automate JUnit Samples
   buildName: BrowserStack Inception
   local: false
