@@ -38,16 +38,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  * @author Anirudha Khanna
  */
 @RunWith(ParallelParameterized.class)
+
 public class BrowserStackLiveDashboardTest {
 
     private static final Logger LOGGER = LogManager.getLogger(BrowserStackLiveDashboardTest.class);
-    private static final String SCREENSHOT_FILE_PATH = "live-dashboard.png";
 
     private static final String PAGE_TITLE = "Dashboard";
     private static final String BROWSER_CONFIGURATION = "browser-configuration.yml";
 
-    private static final ExpectedCondition<Boolean> PAGE_READY_EXPECTATION = new ExpectedCondition<Boolean>() {
-        @NullableDecl
+    private static final ExpectedCondition<Boolean> PAGE_READY_EXPECTATION = new ExpectedCondition<>() {
         @Override
         public Boolean apply(@NullableDecl WebDriver driver) {
             return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
